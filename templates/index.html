@@ -8,9 +8,16 @@
     <style>
         .prompt-card {
             transition: transform 0.2s;
+            min-height: 200px;
         }
         .prompt-card:hover {
             transform: translateY(-5px);
+        }
+        .prompt-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -50,28 +57,55 @@
     <script>
         // Function to create a prompt card
         function createPromptCard(prompt) {
+            const title = prompt.act || 'Untitled Prompt';
+            const text = prompt.prompt || 'No description available';
+            
             return `
-                <div class="prompt-card bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-xl font-bold text-indigo-600 mb-3">${prompt.act}</h2>
-                    <p class="text-gray-700">${prompt.prompt}</p>
+                <div class="prompt-card bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h2 class="text-xl font-bold text-indigo-600 mb-3">${title}</h2>
+                    <p class="text-gray-700 prompt-text flex-grow">${text}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}')" 
+                                class="text-sm text-indigo-500 hover:text-indigo-700">
+                            Copy Prompt
+                        </button>
+                    </div>
                 </div>
             `;
         }
 
+        // Function to copy text to clipboard
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('Prompt copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+        }
+
         // Function to load prompts
         async function loadPrompts(query = '') {
-            const response = await fetch(`/search?query=${query}`);
-            const prompts = await response.json();
-            const grid = document.getElementById('promptsGrid');
-            grid.innerHTML = prompts.map(createPromptCard).join('');
+            try {
+                const response = await fetch(`/search?query=${query}`);
+                const prompts = await response.json();
+                const grid = document.getElementById('promptsGrid');
+                grid.innerHTML = prompts.map(createPromptCard).join('');
+            } catch (error) {
+                console.error('Error loading prompts:', error);
+            }
         }
 
         // Function to load stats
         async function loadStats() {
-            const response = await fetch('/stats');
-            const stats = await response.json();
-            document.getElementById('totalPrompts').textContent = stats.total_prompts;
-            document.getElementById('avgLength').textContent = stats.average_length;
+            try {
+                const response = await fetch('/stats');
+                const stats = await response.json();
+                document.getElementById('totalPrompts').textContent = stats.total_prompts;
+                document.getElementById('avgLength').textContent = stats.average_length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
         }
 
         // Search functionality
@@ -84,10 +118,14 @@
 
         // Random prompt button
         document.getElementById('randomBtn').addEventListener('click', async () => {
-            const response = await fetch('/random');
-            const prompt = await response.json();
-            const grid = document.getElementById('promptsGrid');
-            grid.innerHTML = createPromptCard(prompt);
+            try {
+                const response = await fetch('/random');
+                const prompt = await response.json();
+                const grid = document.getElementById('promptsGrid');
+                grid.innerHTML = createPromptCard(prompt);
+            } catch (error) {
+                console.error('Error loading random prompt:', error);
+            }
         });
 
         // Initial load
