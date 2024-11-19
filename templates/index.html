@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awesome ChatGPT Prompts Explorer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .prompt-card {
+            transition: transform 0.2s;
+        }
+        .prompt-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8 text-indigo-600">Awesome ChatGPT Prompts</h1>
+        
+        <!-- Search and Stats Section -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
+            <div class="w-full md:w-1/2">
+                <input type="text" id="search" placeholder="Search prompts..." 
+                       class="w-full px-4 py-2 rounded-lg border-2 border-indigo-200 focus:border-indigo-500 focus:outline-none">
+            </div>
+            <button id="randomBtn" class="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600 transition">
+                Random Prompt
+            </button>
+        </div>
+
+        <!-- Stats Section -->
+        <div id="stats" class="grid grid-cols-2 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-gray-700">Total Prompts</h3>
+                <p id="totalPrompts" class="text-2xl font-bold text-indigo-600">-</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-gray-700">Average Length</h3>
+                <p id="avgLength" class="text-2xl font-bold text-indigo-600">-</p>
+            </div>
+        </div>
+
+        <!-- Prompts Grid -->
+        <div id="promptsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Prompts will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Function to create a prompt card
+        function createPromptCard(prompt) {
+            return `
+                <div class="prompt-card bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold text-indigo-600 mb-3">${prompt.act}</h2>
+                    <p class="text-gray-700">${prompt.prompt}</p>
+                </div>
+            `;
+        }
+
+        // Function to load prompts
+        async function loadPrompts(query = '') {
+            const response = await fetch(`/search?query=${query}`);
+            const prompts = await response.json();
+            const grid = document.getElementById('promptsGrid');
+            grid.innerHTML = prompts.map(createPromptCard).join('');
+        }
+
+        // Function to load stats
+        async function loadStats() {
+            const response = await fetch('/stats');
+            const stats = await response.json();
+            document.getElementById('totalPrompts').textContent = stats.total_prompts;
+            document.getElementById('avgLength').textContent = stats.average_length;
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('search');
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => loadPrompts(e.target.value), 300);
+        });
+
+        // Random prompt button
+        document.getElementById('randomBtn').addEventListener('click', async () => {
+            const response = await fetch('/random');
+            const prompt = await response.json();
+            const grid = document.getElementById('promptsGrid');
+            grid.innerHTML = createPromptCard(prompt);
+        });
+
+        // Initial load
+        loadPrompts();
+        loadStats();
+    </script>
+</body>
+</html>
